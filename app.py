@@ -40,7 +40,7 @@ def plot_bloch_sphere(x1, y1, z1, x2, y2, z2, gate_name):
     xs = np.outer(np.cos(u), np.sin(v))
     ys = np.outer(np.sin(u), np.sin(v))
     zs = np.outer(np.ones(np.size(u)), np.cos(v))
-    ax.plot_surface(xs, ys, zs, color='lightblue', alpha=0.3, edgecolor='none')
+    ax.plot_surface(xs, ys, zs, color='cyan', alpha=0.3, edgecolor='none')
 
     ax.quiver(0, 0, 0, x1, y1, z1, color='blue', linewidth=2, arrow_length_ratio=0.08)
     ax.text(x1, y1, z1, "Original", color='blue')
