@@ -14,6 +14,8 @@ GATES = {
                              [1j, 0]]),
     'Z (Pauli-Z)': np.array([[1, 0],
                              [0, -1]]),
+    'S (Pauli-S)': np.array([[1, 0],
+                             [0, 1j]]),
     'A (Custom)': (1/np.sqrt(2)) * np.array([[0, 1 - 1j],
                                              [1 + 1j, 0]]),
     'J (Custom)': (1/np.sqrt(2)) * np.array([[1, -1j],
