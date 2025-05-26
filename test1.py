@@ -35,8 +35,7 @@ def bloch_coordinates(qubit):
     x = 2 * np.real(np.conj(a) * b)
     y = 2 * np.imag(np.conj(a) * b)
     z = np.abs(a)**2 - np.abs(b)**2
-    # ✅ Swap X and Y before returning
-    return y, x, z
+    return x, y, z
 
 def plot_bloch_sphere(x1, y1, z1, x2, y2, z2, gate_name):
     fig = plt.figure(figsize=(7, 7))
@@ -48,23 +47,27 @@ def plot_bloch_sphere(x1, y1, z1, x2, y2, z2, gate_name):
     xs = np.outer(np.cos(u), np.sin(v))
     ys = np.outer(np.sin(u), np.sin(v))
     zs = np.outer(np.ones(np.size(u)), np.cos(v))
-    ax.plot_surface(xs, ys, zs, color='cyan', alpha=0.3, edgecolor='none')
+    ax.plot_surface(xs, ys, zs, color='lightpink', alpha=0.3, edgecolor='none')
 
-    # Arrows for original and transformed state
+    # Draw original state
     ax.quiver(0, 0, 0, x1, y1, z1, color='blue', linewidth=2, arrow_length_ratio=0.08)
     ax.text(x1, y1, z1, "Original", color='blue')
 
+    # Draw transformed state
     ax.quiver(0, 0, 0, x2, y2, z2, color='orange', linewidth=2, arrow_length_ratio=0.08)
     ax.text(x2, y2, z2, f"After {gate_name}", color='orange')
 
-    # Axis settings
+    # Axis labels and limits
     ax.set_xlim([-1.2, 1.2])
     ax.set_ylim([-1.2, 1.2])
     ax.set_zlim([-1.2, 1.2])
-    ax.set_xlabel("Y")  # ✅ Swapped
-    ax.set_ylabel("X")  # ✅ Swapped
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
     ax.set_zlabel("Z")
     ax.set_title(f"Bloch Sphere: {gate_name}")
+
+    # Set view to match your drawing (elev=20, azim=-60 gives a nice perspective)
+    ax.view_init(elev=20, azim=-60)
 
     st.pyplot(fig)
 
@@ -86,9 +89,9 @@ psi_new = gate_matrix @ psi
 x2, y2, z2 = bloch_coordinates(psi_new)
 
 st.write(f"### Original Coordinates")
-st.write(f"X: {y1:.4f}, Y: {x1:.4f}, Z: {z1:.4f}")
+st.write(f"X: {x1:.4f}, Y: {y1:.4f}, Z: {z1:.4f}")
 
 st.write(f"### After applying `{gate_name}`")
-st.write(f"X: {y2:.4f}, Y: {x2:.4f}, Z: {z2:.4f}")
+st.write(f"X: {x2:.4f}, Y: {y2:.4f}, Z: {z2:.4f}")
 
 plot_bloch_sphere(x1, y1, z1, x2, y2, z2, gate_name)
