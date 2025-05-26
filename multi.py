@@ -1,10 +1,9 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import re
 
-# Define gates
+# Quantum gates
 GATES = {
     'I': np.eye(2),
     'H': (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]]),
@@ -17,6 +16,7 @@ GATES = {
     'J': (1 / np.sqrt(2)) * np.array([[1, -1j], [1j, -1]])
 }
 
+# Quantum helpers
 def spherical_to_bloch(theta, phi):
     return np.array([
         np.cos(theta / 2),
@@ -27,25 +27,23 @@ def bloch_coordinates(qubit):
     a, b = qubit
     x = 2 * np.real(np.conj(a) * b)
     y = 2 * np.imag(np.conj(a) * b)
-    z = np.abs(a)**2 - np.abs(b)**2
+    z = np.abs(a) ** 2 - np.abs(b) ** 2
     return x, y, z
 
-def parse_gate_sequence(seq):
-    tokens = re.findall(r'([A-Za-z])(\d*)', seq)
-    expanded = []
-    for gate, count in tokens:
-        gate = gate.upper()
-        if gate not in GATES:
-            raise ValueError(f"Invalid gate: {gate}")
-        count = int(count) if count else 1
-        expanded.extend([gate] * count)
-    return expanded
+# Parser for gate sequences like H2X1Y3
+def parse_gate_sequence(input_str):
+    tokens = re.findall(r'([A-Za-z])(\d*)', input_str.upper())
+    gate_list = []
+    for g, n in tokens:
+        if g in GATES:
+            gate_list.extend([g] * (int(n) if n else 1))
+    return gate_list
 
-def plot_bloch_sphere(coords_list, gate_seq):
-    fig = plt.figure(figsize=(8, 8))
+# Plot single vector
+def plot_single_bloch(x, y, z, label):
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection='3d')
 
-    # Draw the Bloch sphere
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 100)
     xs = np.outer(np.cos(u), np.sin(v))
@@ -53,12 +51,8 @@ def plot_bloch_sphere(coords_list, gate_seq):
     zs = np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(xs, ys, zs, color='cyan', alpha=0.3, edgecolor='none')
 
-    # Plot qubit states
-    colors = plt.cm.plasma(np.linspace(0, 1, len(coords_list)))
-    for i, (x, y, z) in enumerate(coords_list):
-        label = "Original" if i == 0 else gate_seq[i-1]
-        ax.quiver(0, 0, 0, x, y, z, color=colors[i], linewidth=2, arrow_length_ratio=0.08)
-        ax.text(x, y, z, label, color=colors[i])
+    ax.quiver(0, 0, 0, x, y, z, color='orange', linewidth=2, arrow_length_ratio=0.08)
+    ax.text(x, y, z, label, color='orange')
 
     ax.set_xlim([-1.2, 1.2])
     ax.set_ylim([-1.2, 1.2])
@@ -66,40 +60,59 @@ def plot_bloch_sphere(coords_list, gate_seq):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
-    ax.set_title("Bloch Sphere: Intermediate States")
-
+    ax.set_title(f"Bloch Sphere: {label}")
     st.pyplot(fig)
 
-# --- Streamlit UI ---
-st.title("Quantum Bloch Sphere Visualizer with Multiple Gates")
+# Main App
+st.title("Quantum Gate Visualizer on Bloch Sphere")
 
 theta_deg = st.slider("Theta (θ) in degrees", 0, 180, 45)
 phi_deg = st.slider("Phi (φ) in degrees", 0, 360, 90)
+gate_input = st.text_input("Enter gate sequence (e.g. H3X2Y1)", "H3X2Y1")
 
-gate_input = st.text_input("Enter gate sequence (e.g., H3X2Y or XZHHT)", "H3X2Y")
+theta = np.radians(theta_deg)
+phi = np.radians(phi_deg)
+psi = spherical_to_bloch(theta, phi)
 
-try:
-    gate_sequence = parse_gate_sequence(gate_input)
+gate_sequence = parse_gate_sequence(gate_input)
 
-    theta = np.radians(theta_deg)
-    phi = np.radians(phi_deg)
-    psi = spherical_to_bloch(theta, phi)
+states = [psi]
+labels = ["Initial"]
+amplitudes = [psi]
+coords = [bloch_coordinates(psi)]
+gate_counts = {}
 
-    # Store intermediate states
-    coords = [bloch_coordinates(psi.copy())]
+for gate in gate_sequence:
+    gate_counts[gate] = gate_counts.get(gate, 0) + 1
+    label = f"{gate}_{gate_counts[gate]}"
+    psi = GATES[gate] @ psi
+    states.append(psi)
+    amplitudes.append(psi)
+    coords.append(bloch_coordinates(psi))
+    labels.append(label)
 
-    for g in gate_sequence:
-        psi = GATES[g] @ psi
-        coords.append(bloch_coordinates(psi.copy()))
+# Slider
+step = st.slider("Step", 0, len(labels)-1, 0, format="Step %d")
 
-    # Show values
-    st.write("### Coordinates After Each Step")
-    for i, (x, y, z) in enumerate(coords):
-        label = "Initial" if i == 0 else f"After {gate_sequence[i-1]}"
-        st.write(f"{label}: X={x:.4f}, Y={y:.4f}, Z={z:.4f}")
+st.write(f"### Gate Step: `{labels[step]}`")
+x, y, z = coords[step]
+plot_single_bloch(x, y, z, labels[step])
 
-    # Plot sphere
-    plot_bloch_sphere(coords, gate_sequence)
-
-except ValueError as e:
-    st.error(str(e))
+# State Table
+st.write("### Quantum State Table")
+import pandas as pd
+data = []
+for i, (label, amp, (x, y, z)) in enumerate(zip(labels, amplitudes, coords)):
+    alpha, beta = amp
+    data.append({
+        "Step": label,
+        "α (real)": round(np.real(alpha), 4),
+        "α (imag)": round(np.imag(alpha), 4),
+        "β (real)": round(np.real(beta), 4),
+        "β (imag)": round(np.imag(beta), 4),
+        "X": round(x, 4),
+        "Y": round(y, 4),
+        "Z": round(z, 4)
+    })
+df = pd.DataFrame(data)
+st.dataframe(df, use_container_width=True)
