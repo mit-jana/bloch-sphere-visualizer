@@ -69,10 +69,11 @@ def plot_bloch_sphere(x1, y1, z1, x2, y2, z2, gate_name):
     ax.set_zlabel("Z")
     ax.set_title(f"Bloch Sphere: {gate_name}")
 
-    # Adjust orientation to match hand-drawn diagram
-    ax.view_init(elev=0, azim=-135)
+    
+    ax.view_init(elev=30, azim=135)
 
     st.pyplot(fig)
+
 
 # --- Streamlit UI ---
 st.title("Quantum Bloch Sphere Visualizer")
