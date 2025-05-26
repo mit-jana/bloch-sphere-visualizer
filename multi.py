@@ -33,7 +33,7 @@ def plot_multi_bloch(coords, labels):
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    # Draw sphere
+    # Draw the Bloch sphere
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 100)
     xs = np.outer(np.cos(u), np.sin(v))
@@ -41,9 +41,9 @@ def plot_multi_bloch(coords, labels):
     zs = np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(xs, ys, zs, color='cyan', alpha=0.3, edgecolor='none')
 
-    # Plot all states
-    for i, ((x, y, z), label) in enumerate(zip(coords, labels)):
-        ax.quiver(0, 0, 0, x, y, z, arrow_length_ratio=0.08, linewidth=2, label=label)
+    # Draw all arrows from origin
+    for (x, y, z), label in zip(coords, labels):
+        ax.quiver(0, 0, 0, x, y, z, arrow_length_ratio=0.08, linewidth=2)
         ax.text(x, y, z, f"{label}", fontsize=9, color='black')
 
     ax.set_xlim([-1.2, 1.2])
@@ -52,13 +52,12 @@ def plot_multi_bloch(coords, labels):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
-    ax.set_title("Bloch Sphere: Gate-by-Gate Evolution")
-    ax.legend()
+    ax.set_title("Bloch Sphere: Step-by-Step Gate Evolution")
 
     st.pyplot(fig)
 
 # --- Streamlit UI ---
-st.title("Quantum Bloch Sphere Visualizer with Gate Sequence")
+st.title("Quantum Bloch Sphere Visualizer (Step-by-Step)")
 
 theta_deg = st.slider("Theta (θ) in degrees", 0, 180, 45)
 phi_deg = st.slider("Phi (φ) in degrees", 0, 360, 90)
@@ -72,7 +71,7 @@ psi = spherical_to_bloch(theta, phi)
 states = [psi]
 labels = ["Start"]
 
-# Apply each gate
+# Apply each gate in sequence
 for i, gate_symbol in enumerate(gate_sequence):
     if gate_symbol not in GATES:
         st.error(f"Invalid gate '{gate_symbol}' in sequence.")
@@ -85,5 +84,5 @@ for i, gate_symbol in enumerate(gate_sequence):
 # Convert all states to Bloch coordinates
 coords = [bloch_coordinates(q) for q in states]
 
-# Show Bloch sphere
+# Plot everything
 plot_multi_bloch(coords, labels)
