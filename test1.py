@@ -25,47 +25,47 @@ def state_to_bloch(psi):
 def apply_gate(psi, gate):
     return gate @ psi
 
-# Plot Bloch sphere
+# Plot Bloch sphere with swapped X and Y axes
 def plot_bloch(state_vector, gate_name="I"):
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
 
-    # Sphere surface
-    u = np.linspace(0, 2 * np.pi, 100)
-    v = np.linspace(0, np.pi, 100)
+    # Reduced resolution for faster plotting
+    u = np.linspace(0, 2 * np.pi, 50)
+    v = np.linspace(0, np.pi, 50)
     x = np.outer(np.cos(u), np.sin(v))
     y = np.outer(np.sin(u), np.sin(v))
     z = np.outer(np.ones(np.size(u)), np.cos(v))
-    ax.plot_surface(x, y, z, color='pink', alpha=0.3, edgecolor='none')
+    ax.plot_surface(y, x, z, color='pink', alpha=0.3, edgecolor='none')  # Swap X <-> Y
 
-    # Axes with swapped X-Y orientation
+    # Axes (swapped)
     axis_len = 1.2
-    ax.plot([0, axis_len], [0, 0], [0, 0], 'k')         # +X
-    ax.plot([0, -axis_len], [0, 0], [0, 0], 'k--')       # -X
-    ax.plot([0, 0], [0, axis_len], [0, 0], 'k')          # +Y
-    ax.plot([0, 0], [0, -axis_len], [0, 0], 'k--')       # -Y
+    ax.plot([0, 0], [0, axis_len], [0, 0], 'k')         # +X (now on Y axis)
+    ax.plot([0, 0], [0, -axis_len], [0, 0], 'k--')       # -X
+    ax.plot([0, axis_len], [0, 0], [0, 0], 'k')          # +Y (now on X axis)
+    ax.plot([0, -axis_len], [0, 0], [0, 0], 'k--')       # -Y
     ax.plot([0, 0], [0, 0], [0, axis_len], 'k')          # +Z
     ax.plot([0, 0], [0, 0], [0, -axis_len], 'k--')       # -Z
 
-    # Axis labels
-    ax.text(axis_len, 0, 0, '+X', color='red', fontsize=12)
-    ax.text(-axis_len, 0, 0, '-X', color='red', fontsize=12)
-    ax.text(0, axis_len, 0, '+Y', color='red', fontsize=12)
-    ax.text(0, -axis_len, 0, '-Y', color='red', fontsize=12)
+    # Axis labels (swapped)
+    ax.text(0, axis_len, 0, '+X', color='red', fontsize=12)
+    ax.text(0, -axis_len, 0, '-X', color='red', fontsize=12)
+    ax.text(axis_len, 0, 0, '+Y', color='red', fontsize=12)
+    ax.text(-axis_len, 0, 0, '-Y', color='red', fontsize=12)
     ax.text(0, 0, axis_len, '+Z', color='red', fontsize=12)
     ax.text(0, 0, -axis_len, '-Z', color='red', fontsize=12)
 
-    # State vector arrow
+    # State vector (swapped X and Y)
     bx, by, bz = state_to_bloch(state_vector)
-    ax.quiver(0, 0, 0, bx, by, bz, color='orange', linewidth=2)
-    ax.text(bx, by, bz, f"|ψ⟩ after {gate_name}", color='blue')
+    ax.quiver(0, 0, 0, by, bx, bz, color='orange', linewidth=2)
+    ax.text(by, bx, bz, f"|ψ⟩ after {gate_name}", color='blue')
 
-    # View and aesthetics
+    # View and layout
     ax.view_init(elev=0, azim=135)
     ax.set_xlim([-axis_len, axis_len])
     ax.set_ylim([-axis_len, axis_len])
     ax.set_zlim([-axis_len, axis_len])
-    ax.set_box_aspect([1,1,1])
+    ax.set_box_aspect([1, 1, 1])
     ax.set_axis_off()
     plt.tight_layout()
     plt.show()
@@ -74,8 +74,9 @@ def plot_bloch(state_vector, gate_name="I"):
 psi_0 = np.array([1, 0], dtype=complex)
 
 # Select gate to apply
-selected_gate = "H"  # Change this to "X", "Y", "Z", "H", "S", "T", etc.
+selected_gate = "H"  # Change to any of: "I", "X", "Y", "Z", "H", "S", "T"
 
 # Apply gate and plot
 psi_final = apply_gate(psi_0, GATES[selected_gate])
+print(f"Applying gate: {selected_gate}")
 plot_bloch(psi_final, gate_name=selected_gate)
